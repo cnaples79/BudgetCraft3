@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+Page {
+    background-color: #000000;
+}
+
+ActionBar {
+    background-color: #000000;
+    color: white;
+}
+
+.progress {
+    height: 6;
+    margin-top: 4;
+    border-radius: 3;
+}
