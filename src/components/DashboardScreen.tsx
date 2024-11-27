@@ -1,9 +1,10 @@
 import * as React from "react";
-import { StyleSheet } from "react-nativescript";
+import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { format } from "date-fns";
 
 export function DashboardScreen() {
+    const navigate = useNavigate();
     const { transactions, budgets } = useStore();
     const [totalBalance, setTotalBalance] = React.useState(0);
     const [monthlyExpenses, setMonthlyExpenses] = React.useState(0);
@@ -29,85 +30,92 @@ export function DashboardScreen() {
     }, [transactions]);
 
     return (
-        <scrollView className="bg-black">
-            <stackLayout className="p-4">
-                <label className="text-3xl font-bold text-white text-center mb-4">
+        <div className="min-h-screen bg-black p-4">
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-3xl font-bold text-white text-center mb-4">
                     BudgetCraft
-                </label>
+                </h1>
 
                 {/* Balance Card */}
-                <stackLayout className="bg-[#1a1a1a] rounded-xl p-4 mb-4">
-                    <label className="text-gray-400">Total Balance</label>
-                    <label className="text-2xl font-bold text-white">
+                <div className="bg-[#1a1a1a] rounded-xl p-4 mb-4">
+                    <p className="text-gray-400">Total Balance</p>
+                    <p className="text-2xl font-bold text-white">
                         ${totalBalance.toFixed(2)}
-                    </label>
-                </stackLayout>
+                    </p>
+                </div>
 
                 {/* Income/Expense Summary */}
-                <gridLayout columns="*, *" className="mb-4">
-                    <stackLayout col="0" className="bg-[#1a1a1a] rounded-xl p-4 m-1">
-                        <label className="text-green-500">Income</label>
-                        <label className="text-xl text-white">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-[#1a1a1a] rounded-xl p-4">
+                        <p className="text-green-500">Income</p>
+                        <p className="text-xl text-white">
                             ${monthlyIncome.toFixed(2)}
-                        </label>
-                    </stackLayout>
-                    <stackLayout col="1" className="bg-[#1a1a1a] rounded-xl p-4 m-1">
-                        <label className="text-red-500">Expenses</label>
-                        <label className="text-xl text-white">
+                        </p>
+                    </div>
+                    <div className="bg-[#1a1a1a] rounded-xl p-4">
+                        <p className="text-red-500">Expenses</p>
+                        <p className="text-xl text-white">
                             ${monthlyExpenses.toFixed(2)}
-                        </label>
-                    </stackLayout>
-                </gridLayout>
+                        </p>
+                    </div>
+                </div>
 
                 {/* Recent Transactions */}
-                <label className="text-xl font-bold text-white mb-2">
-                    Recent Transactions
-                </label>
-                <stackLayout className="bg-[#1a1a1a] rounded-xl p-4">
-                    {transactions.slice(0, 5).map(tx => (
-                        <gridLayout key={tx.id} columns="*, auto" className="mb-2">
-                            <stackLayout col="0">
-                                <label className="text-white">{tx.description}</label>
-                                <label className="text-gray-400 text-sm">
-                                    {format(new Date(tx.date), 'MMM dd, yyyy')}
-                                </label>
-                            </stackLayout>
-                            <label col="1" className={tx.type === 'income' ? 'text-green-500' : 'text-red-500'}>
-                                {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
-                            </label>
-                        </gridLayout>
-                    ))}
-                </stackLayout>
+                <div className="bg-[#1a1a1a] rounded-xl p-4 mb-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold text-white">Recent Transactions</h2>
+                        <button
+                            onClick={() => navigate('/add-transaction')}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                            Add Transaction
+                        </button>
+                    </div>
+                    <div className="space-y-2">
+                        {transactions.slice(0, 5).map((tx, index) => (
+                            <div key={index} className="flex justify-between items-center p-2 hover:bg-[#2a2a2a] rounded-lg">
+                                <div>
+                                    <p className="text-white font-medium">{tx.description}</p>
+                                    <p className="text-gray-400 text-sm">
+                                        {format(new Date(tx.date), 'MMM d, yyyy')}
+                                    </p>
+                                </div>
+                                <p className={`text-lg ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                                    ${tx.amount.toFixed(2)}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
                 {/* Budget Overview */}
-                <label className="text-xl font-bold text-white mt-4 mb-2">
-                    Budget Overview
-                </label>
-                <stackLayout className="bg-[#1a1a1a] rounded-xl p-4">
-                    {budgets.map(budget => (
-                        <stackLayout key={budget.id} className="mb-2">
-                            <gridLayout columns="*, auto">
-                                <label col="0" className="text-white">{budget.category}</label>
-                                <label col="1" className="text-white">
-                                    ${budget.spent.toFixed(2)} / ${budget.amount.toFixed(2)}
-                                </label>
-                            </gridLayout>
-                            <progress 
-                                value={budget.spent / budget.amount * 100} 
-                                maxValue={100}
-                                className={budget.spent > budget.amount ? 'bg-red-500' : 'bg-blue-500'}
-                            />
-                        </stackLayout>
-                    ))}
-                </stackLayout>
-            </stackLayout>
-        </scrollView>
+                <div className="bg-[#1a1a1a] rounded-xl p-4">
+                    <h2 className="text-xl font-semibold text-white mb-4">Budget Overview</h2>
+                    <div className="space-y-4">
+                        {budgets.map((budget, index) => {
+                            const spent = transactions
+                                .filter(tx => tx.category === budget.category && tx.type === 'expense')
+                                .reduce((acc, tx) => acc + tx.amount, 0);
+                            const percentage = (spent / budget.amount) * 100;
+
+                            return (
+                                <div key={index} className="space-y-1">
+                                    <div className="flex justify-between text-white">
+                                        <span>{budget.category}</span>
+                                        <span>${spent.toFixed(2)} / ${budget.amount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-700 rounded-full h-2">
+                                        <div
+                                            className={`h-2 rounded-full ${percentage > 100 ? 'bg-red-500' : 'bg-blue-500'}`}
+                                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        height: "100%",
-        backgroundColor: "#000000",
-    }
-});
