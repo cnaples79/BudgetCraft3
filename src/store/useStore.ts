@@ -1,14 +1,17 @@
 import { create } from 'zustand';
 import { Transaction, Budget } from '../types';
+import { toast } from 'react-hot-toast';
 
 interface State {
   transactions: Transaction[];
   budgets: Budget[];
   categories: string[];
   addTransaction: (transaction: Transaction) => void;
+  editTransaction: (id: string, transaction: Partial<Transaction>) => void;
+  deleteTransaction: (id: string) => void;
   addBudget: (budget: Budget) => void;
   updateBudget: (budget: Budget) => void;
-  deleteTransaction: (id: string) => void;
+  deleteBudget: (id: string) => void;
   loadData: () => Promise<void>;
 }
 
@@ -33,20 +36,17 @@ export const useStore = create<State>((set, get) => ({
       transactions: [...state.transactions, transaction],
     }));
     localStorage.setItem('transactions', JSON.stringify(get().transactions));
+    toast.success('Transaction added successfully');
   },
 
-  addBudget: (budget) => {
+  editTransaction: (id, updatedFields) => {
     set((state) => ({
-      budgets: [...state.budgets, budget],
+      transactions: state.transactions.map((t) => 
+        t.id === id ? { ...t, ...updatedFields } : t
+      ),
     }));
-    localStorage.setItem('budgets', JSON.stringify(get().budgets));
-  },
-
-  updateBudget: (budget) => {
-    set((state) => ({
-      budgets: state.budgets.map((b) => (b.id === budget.id ? budget : b)),
-    }));
-    localStorage.setItem('budgets', JSON.stringify(get().budgets));
+    localStorage.setItem('transactions', JSON.stringify(get().transactions));
+    toast.success('Transaction updated successfully');
   },
 
   deleteTransaction: (id) => {
@@ -54,6 +54,37 @@ export const useStore = create<State>((set, get) => ({
       transactions: state.transactions.filter((t) => t.id !== id),
     }));
     localStorage.setItem('transactions', JSON.stringify(get().transactions));
+    toast.success('Transaction deleted successfully');
+  },
+
+  addBudget: (budget) => {
+    // Check if budget for this category already exists
+    const existingBudget = get().budgets.find(b => b.category === budget.category);
+    if (existingBudget) {
+      toast.error('Budget for this category already exists');
+      return;
+    }
+    set((state) => ({
+      budgets: [...state.budgets, budget],
+    }));
+    localStorage.setItem('budgets', JSON.stringify(get().budgets));
+    toast.success('Budget added successfully');
+  },
+
+  updateBudget: (budget) => {
+    set((state) => ({
+      budgets: state.budgets.map((b) => (b.id === budget.id ? budget : b)),
+    }));
+    localStorage.setItem('budgets', JSON.stringify(get().budgets));
+    toast.success('Budget updated successfully');
+  },
+
+  deleteBudget: (id) => {
+    set((state) => ({
+      budgets: state.budgets.filter((b) => b.id !== id),
+    }));
+    localStorage.setItem('budgets', JSON.stringify(get().budgets));
+    toast.success('Budget deleted successfully');
   },
 
   loadData: async () => {
@@ -67,6 +98,7 @@ export const useStore = create<State>((set, get) => ({
       });
     } catch (error) {
       console.error('Error loading data:', error);
+      toast.error('Error loading data');
     }
   },
 }));
